@@ -12,6 +12,9 @@ export interface ITag {
 
     /** Tag value, exactly as written in source. */
     value: string;
+
+    /** object of options */
+    options?: Record<string, any>;
 }
 
 /**

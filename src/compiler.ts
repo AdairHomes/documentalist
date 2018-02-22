@@ -16,10 +16,21 @@ import { IBlock, ICompiler, IHeadingTag, StringOrTag } from "./client";
 const METADATA_REGEX = /^---\n?((?:.|\n)*)\n---\n/;
 
 /**
- * Splits text content for lines that begin with `@tagName`.
+ * Splits text content for sections that begin with `@tagName`.
+ *
+ * Single Line Syntax:
+ * @tagname {options (opt)} value
+ *
+ * Multi Line Syntax:
+ * @tagname {options (opt)} ...
+ *  value
+ * ...
+ *
+ * Output groups = 1: tagname, 2: options, 3: multiline value, 4: single line value
  */
-const TAG_REGEX = /^@(\S+)(?:\s+([^\n]+))?$/;
-const TAG_SPLIT_REGEX = /^(@\S+(?:\s+[^\n]+)?)$/gm;
+const TAG_REGEX = /(?:^@(\S+)[ \t]*({[\S\s]*?})?[ \t]*(?:(?:\.{3,}\n([\S\s]*?)\n\.{3,})|(\w+[^\n]*)))/gm;
+// grab as one group
+const TAG_SPLIT_REGEX = /(^@\S+[ \t]*(?:{[\S\s]*?})?[ \t]*(?:(?:\.{3,}[\S\s]*?\n\.{3,})|(?:\w+[^\n]*)))/gm;
 
 export interface ICompilerOptions {
     /** Options for markdown rendering. See https://github.com/chjj/marked#options-1. */
@@ -95,13 +106,28 @@ export class Compiler implements ICompiler {
                 }
             } else {
                 const tag = match[1];
-                const value = match[2];
+                let options;
+                // if options exist, parse from JSON
+                if (match[2] !== undefined) {
+                    try {
+                        options = JSON.parse(match[2]);
+                    } catch (error) {
+                        console.error(error);
+                        options = { error };
+                    }
+                } else {
+                    options = null;
+                }
+                // value will either be in group 3 or 4
+                const value = match[3] !== undefined ? match[3] : match[4];
+
+                // custom heading tag
                 if (/#+/.test(tag)) {
                     // NOTE: not enough information to populate `route` field yet
                     const heading: IHeadingTag = { tag: "heading", value, level: tag.length, route: "" };
                     arr.push(heading);
                 } else {
-                    arr.push({ tag, value });
+                    arr.push({ tag, value, options });
                 }
             }
             return arr;
