@@ -62,7 +62,7 @@ export class PageMap {
                 pageNode.children.push(this.toTree(node.value, depth + 1));
             } else if (isHeadingTag(node) && node.level > 1) {
                 // skipping h1 headings cuz they become the page title itself.
-                pageNode.children.push(initHeadingNode(node.value, pageNode.level + node.level - 1));
+                pageNode.children.push(initHeadingNode(node.value, node.level));
             }
         });
         return pageNode;
