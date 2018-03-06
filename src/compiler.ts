@@ -28,9 +28,9 @@ const METADATA_REGEX = /^---\n?((?:.|\n)*)\n---\n/;
  *
  * Output groups = 1: tagname, 2: options, 3: multiline value, 4: single line value
  */
-const TAG_REGEX = /(?:^@(\S+)[ \t]*({[\S\s]*?})?[ \t]*(?:(?:\.{3,}\n([\S\s]*?)\n\.{3,})|(\w+[^\n]*)))/gm;
+const TAG_REGEX = /(?:^@(\S+)[ \t]*({[\S\s]*?})?[ \t]*(?:(?:\.{3,}\n([\S\s]*?)\n\.{3,})|(\w+[^\n]*))?)/gm;
 // grab as one group
-const TAG_SPLIT_REGEX = /(^@\S+[ \t]*(?:{[\S\s]*?})?[ \t]*(?:(?:\.{3,}[\S\s]*?\n\.{3,})|(?:\w+[^\n]*)))/gm;
+const TAG_SPLIT_REGEX = /(^@\S+[ \t]*(?:{[\S\s]*?})?[ \t]*(?:(?:\.{3,}[\S\s]*?\n\.{3,})|(?:\w+[^\n]*))?)/gm;
 
 export interface ICompilerOptions {
     /** Options for markdown rendering. See https://github.com/chjj/marked#options-1. */
@@ -106,6 +106,7 @@ export class Compiler implements ICompiler {
                 }
             } else {
                 const tag = match[1];
+                let value = "";
                 let options;
                 // if options exist, parse from JSON
                 if (match[2] !== undefined) {
@@ -119,7 +120,11 @@ export class Compiler implements ICompiler {
                     options = null;
                 }
                 // value will either be in group 3 or 4
-                const value = match[3] !== undefined ? match[3] : match[4];
+                if (match[3] !== undefined) {
+                    value = match[3];
+                } else if (match[4] !== undefined) {
+                    value = match[4];
+                }
 
                 // custom heading tag
                 if (/#+/.test(tag)) {
