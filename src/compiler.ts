@@ -19,18 +19,20 @@ const METADATA_REGEX = /^---\n?((?:.|\n)*)\n---\n/;
  * Splits text content for sections that begin with `@tagName`.
  *
  * Single Line Syntax:
- * @tagname {options (opt)} value
+ * @tagname value {{options (opt)}}
  *
  * Multi Line Syntax:
- * @tagname {options (opt)} ...
- *  value
+ * @tagname value {{options (opt)}} ...
+ *  multiline value
  * ...
  *
- * Output groups = 1: tagname, 2: options, 3: multiline value, 4: single line value
+ * Output groups = 1: tagname, 2: value, 3: options, 4: multiline value
+ *
  */
-const TAG_REGEX = /(?:^@(\S+)[ \t]*({[\S\s]*?})?[ \t]*(?:(?:\.{3,}\n([\S\s]*?)\n\.{3,})|(\w+[^\n]*))?)/gm;
+
+const TAG_REGEX = /(?:^@(\S+)[ \t]*(.*?(?:(?!\.{3,}\n|{{2,}).)*)(?:{({[\S\s]*?})})?[ \t]*(?:\.{3,}\n([\S\s]*?)\n\.{3,})?)/gm;
 // grab as one group
-const TAG_SPLIT_REGEX = /(^@\S+[ \t]*(?:{[\S\s]*?})?[ \t]*(?:(?:\.{3,}[\S\s]*?\n\.{3,})|(?:\w+[^\n]*))?)/gm;
+const TAG_SPLIT_REGEX = /(^@(?:\S+)[ \t]*(?:.*?(?:(?!\.{3,}\n|{{2,}).)*)(?:{{2,}[\S\s]*?}{2,})?[ \t]*(?:\.{3,}\n(?:[\S\s]*?)\n\.{3,})?)/gm;
 
 export interface ICompilerOptions {
     /** Options for markdown rendering. See https://github.com/chjj/marked#options-1. */
@@ -106,12 +108,13 @@ export class Compiler implements ICompiler {
                 }
             } else {
                 const tag = match[1];
-                let value = "";
+                const value = match[2] !== undefined ? match[2] : "";
+                const multilineValue = match[4] !== undefined ? match[4] : "";
                 let options;
                 // if options exist, parse from JSON
-                if (match[2] !== undefined) {
+                if (match[3] !== undefined) {
                     try {
-                        options = JSON.parse(match[2]);
+                        options = JSON.parse(match[3]);
                     } catch (error) {
                         console.error(error);
                         options = { error };
@@ -119,20 +122,19 @@ export class Compiler implements ICompiler {
                 } else {
                     options = null;
                 }
-                // value will either be in group 3 or 4
-                if (match[3] !== undefined) {
-                    value = match[3];
-                } else if (match[4] !== undefined) {
-                    value = match[4];
-                }
 
                 // custom heading tag
                 if (/#+/.test(tag)) {
                     // NOTE: not enough information to populate `route` field yet
-                    const heading: IHeadingTag = { tag: "heading", value, level: tag.length, route: "" };
+                    const heading: IHeadingTag = {
+                        level: tag.length,
+                        route: "",
+                        tag: "heading",
+                        value,
+                    };
                     arr.push(heading);
                 } else {
-                    arr.push({ tag, value, options });
+                    arr.push({ tag, value, options, multilineValue });
                 }
             }
             return arr;

@@ -13,7 +13,10 @@ export interface ITag {
     /** Tag value, exactly as written in source. */
     value: string;
 
-    /** object of options */
+    /** Multiline Tag value */
+    multilineValue?: string;
+
+    /** Tag options object */
     options?: Record<string, any>;
 }
 

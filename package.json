@@ -1,6 +1,6 @@
 {
   "name": "@adair/documentalist",
-  "version": "1.0.0-beta.7",
+  "version": "1.0.0-beta.8",
   "description": "documentation for the rest of us. Forked from documentalist",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
