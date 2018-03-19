@@ -95,7 +95,7 @@ export class MarkdownPlugin implements IPlugin<IMarkdownPluginData> {
         const baseRoute = parent === undefined ? [] : [parent.route];
         const route = isPageNode(node)
             ? baseRoute.concat(node.reference).join("/")
-            : baseRoute.concat(slugify(node.title)).join(".");
+            : baseRoute.concat(slugify(node.title)).join("#");
         node.route = route;
 
         if (isPageNode(node)) {
@@ -107,7 +107,7 @@ export class MarkdownPlugin implements IPlugin<IMarkdownPluginData> {
                 // inject `route` field into heading TAGS (from page contents)
                 if (isHeadingTag(content)) {
                     // h1 tags do not get nested as they are used as page title
-                    content.route = content.level > 1 ? [route, slugify(content.value)].join(".") : route;
+                    content.route = content.level > 1 ? [route, slugify(content.value)].join("#") : route;
                 }
             });
             node.children.forEach(child => this.recurseRoute(pageMap, child, node));
